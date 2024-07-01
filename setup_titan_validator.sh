@@ -48,13 +48,15 @@ read ACCOUNT_NAME
 echo -e "\e[33mMasukkan alamat IP publik Anda yang statis:\e[0m"
 read IP_ADDRESS
 
+echo -e "\e[33mMasukkan jumlah token TTNT yang ingin Anda delegasikan:\e[0m"
+read AMOUNT
+
 # Konfigurasi node dan variabel lainnya
 CHAIN_ID="titan-test-1"
 GAS_PRICE="0.0025uttnt"
 SEED_NODE="bb075c8cc4b7032d506008b68d4192298a09aeea@47.76.107.159:26656"
 ADDRBOOK_URL="https://raw.githubusercontent.com/nezha90/titan/main/addrbook/addrbook.json"
 GENESIS_URL="https://raw.githubusercontent.com/nezha90/titan/main/genesis/genesis.json"
-AMOUNT="10000" # Jumlah token TTNT yang ingin Anda delegasikan
 
 # Instalasi Git dan Go
 echo -e "\e[33mMemasang Git dan Go...\e[0m"
