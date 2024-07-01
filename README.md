@@ -20,6 +20,12 @@ Mengunduh skrip setup_titan_validator.sh dari repositori ini.
 Memberikan izin eksekusi pada skrip.
 Menjalankan skrip untuk mengatur node validator Titan Anda.
 
+Hal yang perlu di perhatikan saat selesai membuat L1 validator : 
+- Simpan kode phrase yang dihasilkan pada saat penginstallan 
+- import kode phrase yang di hasilkan tadi ke wallet Keplr 
+- lalu kirimkan token TNT sejumlah yang anda input saat peng-installan
+- tunggu setidaknya 1-2 jam untuk validator dapat muncul pada browser blockchain titan.
+
 #What's New
 - Interaktif dengan Pengguna : Sekarang pengguna diminta untuk memasukkan moniker (nama unik node) dan nama akun mereka saat menjalankan skrip.
 - Animasi Loading            : Proses instalasi ditandai dengan animasi loading kuning dan hasil yang berhasil ditampilkan dalam warna biru muda.
