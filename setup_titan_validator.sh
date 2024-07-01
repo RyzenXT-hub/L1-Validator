@@ -45,15 +45,17 @@ read CUSTOM_MONIKER
 echo -e "\e[33mMasukkan nama akun:\e[0m"
 read ACCOUNT_NAME
 
-# Memeriksa apakah file seed phrase backup ada
-BACKUP_FILE="/root/backups/${CUSTOM_MONIKER}_wallet_backup.txt"
+# Lokasi file backup seed phrase
+BACKUP_FILE="/root/backups/${ACCOUNT_NAME}_wallet_backup.txt"
+
+# Memeriksa keberadaan file backup seed phrase
 if [ ! -f "$BACKUP_FILE" ]; then
   echo -e "\e[41mFile backup seed phrase tidak ditemukan: $BACKUP_FILE\e[0m"
   exit 1
 fi
 
-# Mendapatkan passphrase dari file backup
-KEYRING_PASSPHRASE=$(cat "$BACKUP_FILE" | grep -oP '".*"' | sed 's/"//g')
+# Membaca passphrase dari file backup
+KEYRING_PASSPHRASE=$(tail -n 1 $BACKUP_FILE)
 
 # Konfigurasi node dan variabel lainnya
 CHAIN_ID="titan-test-1"
@@ -127,19 +129,15 @@ run_with_loading "systemctl start titan.service"
 echo -e "\e[33mMemeriksa status layanan...\e[0m"
 systemctl status titan.service
 
-# Buat direktori backup jika belum ada
-mkdir -p /root/backups/
-
-# Buat akun baru dan backup seed phrase
-echo -e "\e[33mMembuat akun baru dan membackup seed phrase...\e[0m"
-echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE" | titand keys add $ACCOUNT_NAME
+# Backup seed phrase
+echo -e "\e[33mMembuat validator...\e[0m"
+run_with_loading "echo -e \"$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE\" | titand keys add $ACCOUNT_NAME --recover"
 check_failure
-echo -e "\e[36mSeed phrase telah dibackup ke file $BACKUP_FILE\e[0m"
 
 # Buat validator
 echo -e "\e[33mMembuat validator...\e[0m"
 run_with_loading "titand tx staking create-validator \
-  --amount=1000000000uttnt \
+  --amount=${AMOUNT}uttnt \
   --pubkey=$(titand tendermint show-validator) \
   --chain-id=$CHAIN_ID \
   --moniker=$CUSTOM_MONIKER \
@@ -148,7 +146,6 @@ run_with_loading "titand tx staking create-validator \
   --commission-max-rate=1.0 \
   --commission-rate=0.05 \
   --min-self-delegation=1 \
-  --fees 500uttnt \
-  --ip=$(curl -s ifconfig.me)"
+  --fees 500uttnt"
 
 echo -e "\e[36mSkrip selesai dijalankan. Node Titan Anda telah diatur dan berjalan.\e[0m"
