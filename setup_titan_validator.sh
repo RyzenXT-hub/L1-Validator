@@ -43,7 +43,7 @@ read -p "Masukkan moniker (nama unik untuk node Anda): " CUSTOM_MONIKER
 read -p "Masukkan nama akun: " ACCOUNT_NAME
 read -p "Masukkan alamat IP publik Anda yang statis: " IP_ADDRESS
 
-# Konfigurasi node
+# Konfigurasi node dan variabel lainnya
 CHAIN_ID="titan-test-1"
 GAS_PRICE="0.0025uttnt"
 SEED_NODE="bb075c8cc4b7032d506008b68d4192298a09aeea@47.76.107.159:26656"
@@ -78,6 +78,7 @@ run_with_loading "sed -i \"s/^seeds *=.*/seeds = \\\"$SEED_NODE\\\"/\" ~/.titan/
 
 # Unduh file genesis dan addrbook
 echo -e "\e[33mMengunduh file genesis dan addrbook...\e[0m"
+run_with_loading "mkdir -p ~/.titan/config/"
 run_with_loading "wget -O ~/.titan/config/genesis.json $GENESIS_URL"
 run_with_loading "wget -O ~/.titan/config/addrbook.json $ADDRBOOK_URL"
 
@@ -116,9 +117,11 @@ systemctl status titan.service
 # Buat direktori backup jika belum ada
 mkdir -p /root/backups/
 
-# Buat akun baru dan backup seed phrase dengan nama yang dimasukkan pengguna
+# Buat akun baru dan backup seed phrase
 echo -e "\e[33mMembuat akun baru dan membackup seed phrase...\e[0m"
-titand keys add $ACCOUNT_NAME > /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt
+# Generate random passphrase
+KEYRING_PASSPHRASE=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32)
+echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE" | titand keys add $ACCOUNT_NAME > /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt
 check_failure
 echo -e "\e[36mSeed phrase telah dibackup ke file /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt\e[0m"
 
