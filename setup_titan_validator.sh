@@ -45,6 +45,9 @@ read CUSTOM_MONIKER
 echo -e "\e[33mMasukkan nama akun:\e[0m"
 read ACCOUNT_NAME
 
+echo -e "\e[33mMasukkan jumlah token TTNT yang ingin Anda delegasikan:\e[0m"
+read AMOUNT
+
 # Konfigurasi node dan variabel lainnya
 CHAIN_ID="titan-test-1"
 GAS_PRICE="0.0025uttnt"
@@ -126,20 +129,18 @@ mkdir -p /root/backups/
 # Buat akun baru dan backup seed phrase
 echo -e "\e[33mMembuat akun baru dan membackup seed phrase...\e[0m"
 # Generate random passphrase
-ACCOUNT_OUTPUT=$(titand keys add $ACCOUNT_NAME)
+KEYRING_PASSPHRASE=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32)
+ACCOUNT_OUTPUT=$(echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE" | titand keys add $ACCOUNT_NAME)
 MNEMONIC=$(echo "$ACCOUNT_OUTPUT" | grep -oP '(?<=Mnemonic: ).*')
 echo "$ACCOUNT_OUTPUT" > /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt
+echo "$MNEMONIC" >> /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt
+check_failure
 echo -e "\e[36mSeed phrase telah dibackup ke file /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt\e[0m"
-
-# Membaca mnemonic phrase dari file backup
-MNEMONIC=$(grep -oP '(?<=Mnemonic: ).*' /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt)
 
 # Buat validator
 echo -e "\e[33mMembuat validator...\e[0m"
-PASS_FILE="/root/backups/${CUSTOM_MONIKER}_wallet_backup.txt"
-PASSPHRASE=$(grep -oP '(?<=^).*' $PASS_FILE)
-(echo $PASSPHRASE; echo $PASSPHRASE) | titand tx staking create-validator \
-  --amount=1000000uttnt \
+echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE\n" | titand tx staking create-validator \
+  --amount=${AMOUNT}uttnt \
   --pubkey=$(titand tendermint show-validator) \
   --chain-id=$CHAIN_ID \
   --moniker=$CUSTOM_MONIKER \
@@ -149,6 +150,7 @@ PASSPHRASE=$(grep -oP '(?<=^).*' $PASS_FILE)
   --commission-rate=0.05 \
   --min-self-delegation=1 \
   --fees 500uttnt \
-  --ip=$IP_ADDRESS || { echo "Gagal membuat validator"; exit 1; }
+  --broadcast-mode block \
+  --yes
 
 echo -e "\e[36mSkrip selesai dijalankan. Node Titan Anda telah diatur dan berjalan.\e[0m"
