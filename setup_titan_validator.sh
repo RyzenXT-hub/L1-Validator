@@ -73,10 +73,9 @@ mkdir -p /root/backups/
 
 # Generate random passphrase
 KEYRING_PASSPHRASE=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32)
-echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE" > /root/backups/${ACCOUNT_NAME}_wallet_backup.txt
 
 # Backup seed phrase
-echo -e "\e[33mBackup seed phrase...\e[0m"
+echo -e "\e[33mMembuat akun baru dan membackup seed phrase...\e[0m"
 echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE" | titand keys add $ACCOUNT_NAME > /root/backups/${ACCOUNT_NAME}_wallet_backup.txt
 check_failure
 echo -e "\e[36mSeed phrase telah dibackup ke file /root/backups/${ACCOUNT_NAME}_wallet_backup.txt\e[0m"
@@ -132,7 +131,7 @@ systemctl status titan.service
 
 # Buat validator
 echo -e "\e[33mMembuat validator...\e[0m"
-run_with_loading "titand tx staking create-validator \
+run_with_loading "echo $KEYRING_PASSPHRASE | titand tx staking create-validator \
   --amount=1000uttnt \
   --pubkey=$(titand tendermint show-validator) \
   --chain-id=$CHAIN_ID \
@@ -142,6 +141,7 @@ run_with_loading "titand tx staking create-validator \
   --commission-max-rate=1.0 \
   --commission-rate=0.05 \
   --min-self-delegation=1 \
-  --fees 500uttnt"
+  --fees 500uttnt \
+  --yes"
 
 echo -e "\e[36mSkrip selesai dijalankan. Node Titan Anda telah diatur dan berjalan.\e[0m"
