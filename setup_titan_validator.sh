@@ -80,8 +80,8 @@ run_with_loading "titand init $CUSTOM_MONIKER --chain-id $CHAIN_ID"
 
 # Konfigurasi node
 echo -e "\e[33mMengonfigurasi node...\e[0m"
-sed -i 's/^moniker *=.*/moniker = "'"$CUSTOM_MONIKER"'"/' ~/.titan/config/config.toml
-sed -i 's/^seeds *=.*/seeds = "'"$SEED_NODE"'"/' ~/.titan/config/config.toml
+sed -i "s/^moniker *=.*/moniker = '$CUSTOM_MONIKER'/" ~/.titan/config/config.toml
+sed -i "s/^seeds *=.*/seeds = '$SEED_NODE'/" ~/.titan/config/config.toml
 check_failure
 
 # Unduh file genesis dan addrbook
@@ -92,7 +92,7 @@ run_with_loading "wget -O ~/.titan/config/addrbook.json $ADDRBOOK_URL"
 
 # Konfigurasi harga gas minimum
 echo -e "\e[33mMengonfigurasi harga gas minimum...\e[0m"
-sed -i 's/^minimum-gas-prices *=.*/minimum-gas-prices = "'"$GAS_PRICE"'"/' ~/.titan/config/app.toml
+sed -i "s/^minimum-gas-prices *=.*/minimum-gas-prices = '$GAS_PRICE'/" ~/.titan/config/app.toml
 check_failure
 
 # Buat layanan systemd
