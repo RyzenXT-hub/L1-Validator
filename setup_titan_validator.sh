@@ -38,25 +38,6 @@ run_with_loading() {
   check_failure
 }
 
-# Meminta input dari pengguna
-echo -e "\e[33mMasukkan moniker (nama unik untuk node Anda):\e[0m"
-read CUSTOM_MONIKER
-
-echo -e "\e[33mMasukkan nama akun:\e[0m"
-read ACCOUNT_NAME
-
-# Lokasi file backup seed phrase
-BACKUP_FILE="/root/backups/${ACCOUNT_NAME}_wallet_backup.txt"
-
-# Memeriksa keberadaan file backup seed phrase
-if [ ! -f "$BACKUP_FILE" ]; then
-  echo -e "\e[41mFile backup seed phrase tidak ditemukan: $BACKUP_FILE\e[0m"
-  exit 1
-fi
-
-# Membaca passphrase dari file backup
-KEYRING_PASSPHRASE=$(tail -n 1 $BACKUP_FILE)
-
 # Konfigurasi node dan variabel lainnya
 CHAIN_ID="titan-test-1"
 GAS_PRICE="0.0025uttnt"
@@ -64,7 +45,7 @@ SEED_NODE="bb075c8cc4b7032d506008b68d4192298a09aeea@47.76.107.159:26656"
 ADDRBOOK_URL="https://raw.githubusercontent.com/nezha90/titan/main/addrbook/addrbook.json"
 GENESIS_URL="https://raw.githubusercontent.com/nezha90/titan/main/genesis/genesis.json"
 
-# Instalasi Git dan Go
+# Instalasi Git dan Go (jika belum diinstal)
 echo -e "\e[33mMemasang Git dan Go...\e[0m"
 run_with_loading "apt-get update"
 run_with_loading "apt-get install -y git vim"
@@ -73,12 +54,32 @@ run_with_loading "tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz"
 export PATH=$PATH:/usr/local/go/bin
 check_failure
 
-# Clone dan bangun Titan CLI
+# Clone dan bangun Titan CLI (jika belum diinstal)
 echo -e "\e[33mMengkloning dan membangun Titan CLI...\e[0m"
 run_with_loading "git clone https://github.com/nezha90/titan.git"
 cd titan
 run_with_loading "go build ./cmd/titand"
 run_with_loading "cp titand /usr/local/bin"
+
+# Meminta input dari pengguna
+echo -e "\e[33mMasukkan moniker (nama unik untuk node Anda):\e[0m"
+read CUSTOM_MONIKER
+
+echo -e "\e[33mMasukkan nama akun:\e[0m"
+read ACCOUNT_NAME
+
+# Membuat direktori backup jika belum ada
+mkdir -p /root/backups/
+
+# Generate random passphrase
+KEYRING_PASSPHRASE=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32)
+echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE" > /root/backups/${ACCOUNT_NAME}_wallet_backup.txt
+
+# Backup seed phrase
+echo -e "\e[33mBackup seed phrase...\e[0m"
+echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE" | titand keys add $ACCOUNT_NAME > /root/backups/${ACCOUNT_NAME}_wallet_backup.txt
+check_failure
+echo -e "\e[36mSeed phrase telah dibackup ke file /root/backups/${ACCOUNT_NAME}_wallet_backup.txt\e[0m"
 
 # Inisialisasi node
 echo -e "\e[33mMenginisialisasi node...\e[0m"
@@ -129,15 +130,10 @@ run_with_loading "systemctl start titan.service"
 echo -e "\e[33mMemeriksa status layanan...\e[0m"
 systemctl status titan.service
 
-# Backup seed phrase
-echo -e "\e[33mMembuat validator...\e[0m"
-run_with_loading "echo -e \"$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE\" | titand keys add $ACCOUNT_NAME --recover"
-check_failure
-
 # Buat validator
 echo -e "\e[33mMembuat validator...\e[0m"
 run_with_loading "titand tx staking create-validator \
-  --amount=${AMOUNT}uttnt \
+  --amount=1000uttnt \
   --pubkey=$(titand tendermint show-validator) \
   --chain-id=$CHAIN_ID \
   --moniker=$CUSTOM_MONIKER \
