@@ -9,7 +9,8 @@ sudo apt-get update && sudo apt-get install -y wget && wget https://raw.githubus
 ```
 Jika Gagal / Error Silahkan gunakan perintah berikut : 
 ```
-systemctl stop titan.service && systemctl disable titan.service && rm -rf ~/.titan/ && rm -rf titan/ && rm /etc/systemd/system/titan.service && rmsetup_titan_validator.sh  
+systemctl stop titan.service && systemctl disable titan.service && rm -rf ~/.titan/ ~/titan/ /etc/systemd/system/titan.service ~/setup_titan_validator.sh /root/backups/ /root/go/ /usr/local/go/ /root/titan/
+ 
 ```
 Perintah ini akan:
 
