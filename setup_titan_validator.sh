@@ -45,9 +45,9 @@ read CUSTOM_MONIKER
 echo -e "\e[33mMasukkan nama akun:\e[0m"
 read ACCOUNT_NAME
 
-# Mendapatkan alamat IP publik
-echo -e "\e[33mMendeteksi alamat IP publik...\e[0m"
-IP_ADDRESS=$(curl -s https://api.ipify.org)
+# Mendapatkan alamat IP publik secara otomatis
+echo -e "\e[33mMendeteksi alamat IP publik Anda...\e[0m"
+IP_ADDRESS=$(curl -s ifconfig.co)
 if [ -z "$IP_ADDRESS" ]; then
   echo -e "\e[41mGagal mendapatkan alamat IP publik. Pastikan Anda terhubung ke internet.\e[0m"
   exit 1
