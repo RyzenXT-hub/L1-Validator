@@ -39,9 +39,14 @@ run_with_loading() {
 }
 
 # Meminta input dari pengguna
-read -p "Masukkan moniker (nama unik untuk node Anda): " CUSTOM_MONIKER
-read -p "Masukkan nama akun: " ACCOUNT_NAME
-read -p "Masukkan alamat IP publik Anda yang statis: " IP_ADDRESS
+echo -e "\e[33mMasukkan moniker (nama unik untuk node Anda):\e[0m"
+read CUSTOM_MONIKER
+
+echo -e "\e[33mMasukkan nama akun:\e[0m"
+read ACCOUNT_NAME
+
+echo -e "\e[33mMasukkan alamat IP publik Anda yang statis:\e[0m"
+read IP_ADDRESS
 
 # Konfigurasi node dan variabel lainnya
 CHAIN_ID="titan-test-1"
