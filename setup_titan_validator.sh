@@ -139,7 +139,7 @@ echo -e "\e[36mSeed phrase telah dibackup ke file $BACKUP_FILE\e[0m"
 # Buat validator
 echo -e "\e[33mMembuat validator...\e[0m"
 run_with_loading "titand tx staking create-validator \
-  --amount=${AMOUNT}uttnt \
+  --amount=1000000000uttnt \
   --pubkey=$(titand tendermint show-validator) \
   --chain-id=$CHAIN_ID \
   --moniker=$CUSTOM_MONIKER \
