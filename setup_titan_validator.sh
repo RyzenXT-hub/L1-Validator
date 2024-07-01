@@ -78,7 +78,7 @@ function install_node() {
     sudo cp titand /usr/local/bin
 
     # Configure Titan node
-    export MONIKER="TitanNo1"
+    export MONIKER="Ryzen-Node"
     titand init $MONIKER --chain-id titan-test-1
     titand config node tcp://localhost:53457
 
