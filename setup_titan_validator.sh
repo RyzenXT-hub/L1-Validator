@@ -41,6 +41,7 @@ run_with_loading() {
 # Meminta input dari pengguna
 read -p "Masukkan moniker (nama unik untuk node Anda): " CUSTOM_MONIKER
 read -p "Masukkan nama akun: " ACCOUNT_NAME
+read -p "Masukkan alamat IP publik Anda yang statis: " IP_ADDRESS
 
 # Konfigurasi node
 CHAIN_ID="titan-test-1"
@@ -49,7 +50,6 @@ SEED_NODE="bb075c8cc4b7032d506008b68d4192298a09aeea@47.76.107.159:26656"
 ADDRBOOK_URL="https://raw.githubusercontent.com/nezha90/titan/main/addrbook/addrbook.json"
 GENESIS_URL="https://raw.githubusercontent.com/nezha90/titan/main/genesis/genesis.json"
 AMOUNT="10000" # Jumlah token TTNT yang ingin Anda delegasikan
-IP_ADDRESS="34.162.68.115" # Alamat IP publik Anda yang statis
 
 # Instalasi Git dan Go
 echo -e "\e[33mMemasang Git dan Go...\e[0m"
