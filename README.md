@@ -15,6 +15,6 @@ Memberikan izin eksekusi pada skrip.
 Menjalankan skrip untuk mengatur node validator Titan Anda.
 
 #What's New
-- Interaktif dengan Pengguna: Sekarang pengguna diminta untuk memasukkan moniker (nama unik node) dan nama akun mereka saat menjalankan skrip.
-- Animasi Loading: Proses instalasi ditandai dengan animasi loading kuning dan hasil yang berhasil ditampilkan dalam warna biru muda.
-Backup Otomatis: Skrip ini secara otomatis menciptakan file backup untuk akun yang Anda masukkan dan seed phrase yang dihasilkan dari Titan Daemon. File backup ini dapat ditemukan di direktori /root/backups/ dengan nama yang Anda masukkan di saat instalasi.
+- Interaktif dengan Pengguna : Sekarang pengguna diminta untuk memasukkan moniker (nama unik node) dan nama akun mereka saat menjalankan skrip.
+- Animasi Loading            : Proses instalasi ditandai dengan animasi loading kuning dan hasil yang berhasil ditampilkan dalam warna biru muda.
+- Backup Otomatis            : Skrip ini secara otomatis menciptakan file backup untuk akun yang Anda masukkan dan seed phrase yang dihasilkan dari Titan Daemon. File     backup ini dapat ditemukan di direktori /root/backups/ dengan nama yang Anda masukkan di saat instalasi.
