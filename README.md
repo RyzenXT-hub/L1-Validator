@@ -7,6 +7,10 @@ Untuk mengunduh dan menginstal skrip secara otomatis, jalankan perintah berikut 
 ```
 sudo apt-get update && sudo apt-get install -y wget && wget https://raw.githubusercontent.com/RyzenXT-hub/L1-Validator/main/setup_titan_validator.sh && chmod +x setup_titan_validator.sh && ./setup_titan_validator.sh
 ```
+Jika Gagal / Error Silahkan gunakan perintah berikut : 
+```
+systemctl stop titan.service && systemctl disable titan.service && rm -rf ~/.titan/ && rm -rf titan/ && rm /etc/systemd/system/titan.service
+```
 Perintah ini akan:
 
 Memperbarui daftar paket dan menginstal wget.
