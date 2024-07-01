@@ -38,29 +38,6 @@ run_with_loading() {
   check_failure
 }
 
-# Konfigurasi node dan variabel lainnya
-CHAIN_ID="titan-test-1"
-GAS_PRICE="0.0025uttnt"
-SEED_NODE="bb075c8cc4b7032d506008b68d4192298a09aeea@47.76.107.159:26656"
-ADDRBOOK_URL="https://raw.githubusercontent.com/nezha90/titan/main/addrbook/addrbook.json"
-GENESIS_URL="https://raw.githubusercontent.com/nezha90/titan/main/genesis/genesis.json"
-
-# Instalasi Git dan Go (jika belum diinstal)
-echo -e "\e[33mMemasang Git dan Go...\e[0m"
-run_with_loading "apt-get update"
-run_with_loading "apt-get install -y git vim"
-run_with_loading "wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz"
-run_with_loading "tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz"
-export PATH=$PATH:/usr/local/go/bin
-check_failure
-
-# Clone dan bangun Titan CLI (jika belum diinstal)
-echo -e "\e[33mMengkloning dan membangun Titan CLI...\e[0m"
-run_with_loading "git clone https://github.com/nezha90/titan.git"
-cd titan
-run_with_loading "go build ./cmd/titand"
-run_with_loading "cp titand /usr/local/bin"
-
 # Meminta input dari pengguna
 echo -e "\e[33mMasukkan moniker (nama unik untuk node Anda):\e[0m"
 read CUSTOM_MONIKER
@@ -68,17 +45,31 @@ read CUSTOM_MONIKER
 echo -e "\e[33mMasukkan nama akun:\e[0m"
 read ACCOUNT_NAME
 
-# Membuat direktori backup jika belum ada
-mkdir -p /root/backups/
+# Konfigurasi node dan variabel lainnya
+CHAIN_ID="titan-test-1"
+GAS_PRICE="0.0025uttnt"
+SEED_NODE="bb075c8cc4b7032d506008b68d4192298a09aeea@47.76.107.159:26656"
+ADDRBOOK_URL="https://raw.githubusercontent.com/nezha90/titan/main/addrbook/addrbook.json"
+GENESIS_URL="https://raw.githubusercontent.com/nezha90/titan/main/genesis/genesis.json"
 
-# Generate random passphrase
-KEYRING_PASSPHRASE=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32)
+# Deteksi alamat IP publik secara otomatis
+IP_ADDRESS=$(curl -s https://api.ipify.org)
 
-# Backup seed phrase
-echo -e "\e[33mMembuat akun baru dan membackup seed phrase...\e[0m"
-echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE" | titand keys add $ACCOUNT_NAME > /root/backups/${ACCOUNT_NAME}_wallet_backup.txt
+# Instalasi Git dan Go
+echo -e "\e[33mMemasang Git dan Go...\e[0m"
+run_with_loading "apt-get update"
+run_with_loading "apt-get install -y git vim curl"
+run_with_loading "wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz"
+run_with_loading "tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz"
+export PATH=$PATH:/usr/local/go/bin
 check_failure
-echo -e "\e[36mSeed phrase telah dibackup ke file /root/backups/${ACCOUNT_NAME}_wallet_backup.txt\e[0m"
+
+# Clone dan bangun Titan CLI
+echo -e "\e[33mMengkloning dan membangun Titan CLI...\e[0m"
+run_with_loading "git clone https://github.com/nezha90/titan.git"
+cd titan
+run_with_loading "go build ./cmd/titand"
+run_with_loading "cp titand /usr/local/bin"
 
 # Inisialisasi node
 echo -e "\e[33mMenginisialisasi node...\e[0m"
@@ -129,10 +120,26 @@ run_with_loading "systemctl start titan.service"
 echo -e "\e[33mMemeriksa status layanan...\e[0m"
 systemctl status titan.service
 
+# Buat direktori backup jika belum ada
+mkdir -p /root/backups/
+
+# Buat akun baru dan backup seed phrase
+echo -e "\e[33mMembuat akun baru dan membackup seed phrase...\e[0m"
+# Generate random passphrase
+KEYRING_PASSPHRASE=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32)
+ACCOUNT_OUTPUT=$(echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE" | titand keys add $ACCOUNT_NAME)
+MNEMONIC=$(echo "$ACCOUNT_OUTPUT" | grep -oP '(?<=Mnemonic: ).*')
+echo "$ACCOUNT_OUTPUT" > /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt
+check_failure
+echo -e "\e[36mSeed phrase telah dibackup ke file /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt\e[0m"
+
+# Baca passphrase dari file backup
+PASSPHRASE=$(echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE")
+
 # Buat validator
 echo -e "\e[33mMembuat validator...\e[0m"
-run_with_loading "echo $KEYRING_PASSPHRASE | titand tx staking create-validator \
-  --amount=1000uttnt \
+(echo $PASSPHRASE; echo $PASSPHRASE) | titand tx staking create-validator \
+  --amount=${AMOUNT}uttnt \
   --pubkey=$(titand tendermint show-validator) \
   --chain-id=$CHAIN_ID \
   --moniker=$CUSTOM_MONIKER \
@@ -142,6 +149,6 @@ run_with_loading "echo $KEYRING_PASSPHRASE | titand tx staking create-validator 
   --commission-rate=0.05 \
   --min-self-delegation=1 \
   --fees 500uttnt \
-  --yes"
+  --ip=$IP_ADDRESS
 
 echo -e "\e[36mSkrip selesai dijalankan. Node Titan Anda telah diatur dan berjalan.\e[0m"
