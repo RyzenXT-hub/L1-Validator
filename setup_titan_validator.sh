@@ -33,10 +33,9 @@ loading() {
 
 # Fungsi untuk menjalankan perintah dengan animasi loading
 run_with_loading() {
-  echo -e "\e[33m$1\e[0m"
-  $1
-  check_failure
+  $1 &
   loading
+  check_failure
 }
 
 # Meminta input dari pengguna
@@ -60,34 +59,44 @@ ADDRBOOK_URL="https://raw.githubusercontent.com/nezha90/titan/main/addrbook/addr
 GENESIS_URL="https://raw.githubusercontent.com/nezha90/titan/main/genesis/genesis.json"
 
 # Instalasi Git dan Go
+echo -e "\e[33mMemasang Git dan Go...\e[0m"
 run_with_loading "apt-get update"
 run_with_loading "apt-get install -y git vim"
 run_with_loading "wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz"
 run_with_loading "tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz"
 export PATH=$PATH:/usr/local/go/bin
+check_failure
 
 # Clone dan bangun Titan CLI
+echo -e "\e[33mMengkloning dan membangun Titan CLI...\e[0m"
 run_with_loading "git clone https://github.com/nezha90/titan.git"
 cd titan
 run_with_loading "go build ./cmd/titand"
 run_with_loading "cp titand /usr/local/bin"
 
 # Inisialisasi node
+echo -e "\e[33mMenginisialisasi node...\e[0m"
 run_with_loading "titand init $CUSTOM_MONIKER --chain-id $CHAIN_ID"
 
 # Konfigurasi node
-run_with_loading "sed -i \"s/^moniker *=.*/moniker = \\\"$CUSTOM_MONIKER\\\"/\" ~/.titan/config/config.toml"
-run_with_loading "sed -i \"s/^seeds *=.*/seeds = \\\"$SEED_NODE\\\"/\" ~/.titan/config/config.toml"
+echo -e "\e[33mMengonfigurasi node...\e[0m"
+sed -i 's/^moniker *=.*/moniker = "'"$CUSTOM_MONIKER"'"/' ~/.titan/config/config.toml
+sed -i 's/^seeds *=.*/seeds = "'"$SEED_NODE"'"/' ~/.titan/config/config.toml
+check_failure
 
 # Unduh file genesis dan addrbook
-run_with_loading "mkdir -p ~/.titan/config/"
+echo -e "\e[33mMengunduh file genesis dan addrbook...\e[0m"
+mkdir -p ~/.titan/config/
 run_with_loading "wget -O ~/.titan/config/genesis.json $GENESIS_URL"
 run_with_loading "wget -O ~/.titan/config/addrbook.json $ADDRBOOK_URL"
 
 # Konfigurasi harga gas minimum
-run_with_loading "echo -e \"minimum-gas-prices = \\\"$GAS_PRICE\\\"\" >> ~/.titan/config/app.toml"
+echo -e "\e[33mMengonfigurasi harga gas minimum...\e[0m"
+sed -i 's/^minimum-gas-prices *=.*/minimum-gas-prices = "'"$GAS_PRICE"'"/' ~/.titan/config/app.toml
+check_failure
 
 # Buat layanan systemd
+echo -e "\e[33mMembuat layanan systemd...\e[0m"
 cat <<EOT > /etc/systemd/system/titan.service
 [Unit]
 Description=Titan Daemon
@@ -106,6 +115,7 @@ EOT
 check_failure
 
 # Aktifkan dan mulai layanan
+echo -e "\e[33mMengaktifkan dan memulai layanan...\e[0m"
 run_with_loading "systemctl enable titan.service"
 run_with_loading "systemctl start titan.service"
 
@@ -118,22 +128,25 @@ mkdir -p /root/backups/
 
 # Buat akun baru dan backup seed phrase
 echo -e "\e[33mMembuat akun baru dan membackup seed phrase...\e[0m"
+# Generate random passphrase
 KEYRING_PASSPHRASE=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32)
-run_with_loading "echo -e \"$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE\" | titand keys add $ACCOUNT_NAME > /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt"
+echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE" | titand keys add $ACCOUNT_NAME > /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt
+check_failure
+echo -e "\e[36mSeed phrase telah dibackup ke file /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt\e[0m"
 
 # Buat validator
 echo -e "\e[33mMembuat validator...\e[0m"
 run_with_loading "titand tx staking create-validator \
-  --amount=${AMOUNT} \
+  --amount=${AMOUNT}uttnt \
   --pubkey=$(titand tendermint show-validator) \
   --chain-id=$CHAIN_ID \
-  --moniker=\"$CUSTOM_MONIKER\" \
+  --moniker=$CUSTOM_MONIKER \
   --from=$ACCOUNT_NAME \
   --commission-max-change-rate=0.01 \
   --commission-max-rate=1.0 \
   --commission-rate=0.05 \
   --min-self-delegation=1 \
-  --fees=500uttnt \
+  --fees 500uttnt \
   --ip=$IP_ADDRESS"
 
 echo -e "\e[36mSkrip selesai dijalankan. Node Titan Anda telah diatur dan berjalan.\e[0m"
