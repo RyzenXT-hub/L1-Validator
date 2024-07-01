@@ -80,8 +80,8 @@ run_with_loading "titand init $CUSTOM_MONIKER --chain-id $CHAIN_ID"
 
 # Konfigurasi node
 echo -e "\e[33mMengonfigurasi node...\e[0m"
-run_with_loading "sed -i 's/^moniker *=.*/moniker = \"$CUSTOM_MONIKER\"/' ~/.titan/config/config.toml"
-run_with_loading "sed -i 's/^seeds *=.*/seeds = \"$SEED_NODE\"/' ~/.titan/config/config.toml"
+run_with_loading "sed -i \"s/^moniker *=.*/moniker = \\\"$CUSTOM_MONIKER\\\"/\" ~/.titan/config/config.toml"
+run_with_loading "sed -i \"s/^seeds *=.*/seeds = \\\"$SEED_NODE\\\"/\" ~/.titan/config/config.toml"
 
 # Unduh file genesis dan addrbook
 echo -e "\e[33mMengunduh file genesis dan addrbook...\e[0m"
@@ -91,7 +91,7 @@ run_with_loading "wget -O ~/.titan/config/addrbook.json $ADDRBOOK_URL"
 
 # Konfigurasi harga gas minimum
 echo -e "\e[33mMengonfigurasi harga gas minimum...\e[0m"
-run_with_loading "sed -i 's/^minimum-gas-prices *=.*/minimum-gas-prices = \"$GAS_PRICE\"/' ~/.titan/config/app.toml"
+run_with_loading "sed -i \"s/^minimum-gas-prices *=.*/minimum-gas-prices = \\\"$GAS_PRICE\\\"/\" ~/.titan/config/app.toml"
 
 # Buat layanan systemd
 echo -e "\e[33mMembuat layanan systemd...\e[0m"
@@ -139,7 +139,7 @@ run_with_loading "titand tx staking create-validator \
   --amount=${AMOUNT}uttnt \
   --pubkey=$(titand tendermint show-validator) \
   --chain-id=$CHAIN_ID \
-  --moniker=$CUSTOM_MONIKER \
+  --moniker=\"$CUSTOM_MONIKER\" \
   --from=$ACCOUNT_NAME \
   --commission-max-change-rate=0.01 \
   --commission-max-rate=1.0 \
