@@ -1,4 +1,4 @@
-# L1-Validator
+# Bash SHELL L1-Validator 
 Skrip ini digunakan untuk mengatur dan mengkonfigurasi node validator Titan. Dengan skrip ini, Anda dapat dengan mudah menginisialisasi node Titan, mengunduh dan mengonfigurasi semua file yang diperlukan, serta membuat validator baru.
 
 Cara Penggunaan
@@ -7,10 +7,11 @@ Untuk mengunduh dan menginstal skrip secara otomatis, jalankan perintah berikut 
 ```
 sudo apt-get update && sudo apt-get install -y wget && wget https://raw.githubusercontent.com/RyzenXT-hub/L1-Validator/main/setup_titan_validator.sh && chmod +x setup_titan_validator.sh && ./setup_titan_validator.sh
 ```
-Jika Gagal / Error Silahkan gunakan perintah berikut : 
+Jika Gagal / Error Silahkan copy dan jalankan perintah berikut : 
 ```
-systemctl stop titan.service && systemctl disable titan.service && rm -rf ~/.titan/ ~/titan/ /etc/systemd/system/titan.service ~/setup_titan_validator.sh /root/backups/ /root/go/ /usr/local/go/ /root/titan/
- 
+systemctl stop titan.service || true
+systemctl disable titan.service || true
+rm -rf ~/.titan/ ~/titan/ /etc/systemd/system/titan.service ~/setup_titan_validator.sh /root/backups/ /root/go/ /usr/local/go/ go1.21.0.linux-amd64.tar.gz 
 ```
 Perintah ini akan:
 
