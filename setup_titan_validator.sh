@@ -45,8 +45,15 @@ read CUSTOM_MONIKER
 echo -e "\e[33mMasukkan nama akun:\e[0m"
 read ACCOUNT_NAME
 
-echo -e "\e[33mMasukkan alamat IP publik Anda yang statis:\e[0m"
-read IP_ADDRESS
+# Mendapatkan alamat IP publik
+echo -e "\e[33mMendeteksi alamat IP publik...\e[0m"
+IP_ADDRESS=$(curl -s https://api.ipify.org)
+if [ -z "$IP_ADDRESS" ]; then
+  echo -e "\e[41mGagal mendapatkan alamat IP publik. Pastikan Anda terhubung ke internet.\e[0m"
+  exit 1
+fi
+
+echo -e "\e[32mAlamat IP publik Anda adalah: $IP_ADDRESS\e[0m"
 
 echo -e "\e[33mMasukkan jumlah token TTNT yang ingin Anda delegasikan:\e[0m"
 read AMOUNT
@@ -88,7 +95,9 @@ check_failure
 echo -e "\e[33mMengunduh file genesis dan addrbook...\e[0m"
 mkdir -p ~/.titan/config/
 run_with_loading "wget -O ~/.titan/config/genesis.json $GENESIS_URL"
+check_failure
 run_with_loading "wget -O ~/.titan/config/addrbook.json $ADDRBOOK_URL"
+check_failure
 
 # Konfigurasi harga gas minimum
 echo -e "\e[33mMengonfigurasi harga gas minimum...\e[0m"
@@ -121,6 +130,7 @@ run_with_loading "systemctl start titan.service"
 
 # Periksa status layanan
 echo -e "\e[33mMemeriksa status layanan...\e[0m"
+sleep 5  # Tunggu beberapa detik sebelum memeriksa status
 systemctl status titan.service
 
 # Buat direktori backup jika belum ada
@@ -128,17 +138,15 @@ mkdir -p /root/backups/
 
 # Buat akun baru dan backup seed phrase
 echo -e "\e[33mMembuat akun baru dan membackup seed phrase...\e[0m"
-# Generate random passphrase securely
+# Generate random passphrase
 KEYRING_PASSPHRASE=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32)
-# Simpan passphrase dengan aman dan gunakan hanya untuk satu kali input
 echo -e "$KEYRING_PASSPHRASE\n$KEYRING_PASSPHRASE" | titand keys add $ACCOUNT_NAME > /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt
 check_failure
 echo -e "\e[36mSeed phrase telah dibackup ke file /root/backups/${CUSTOM_MONIKER}_wallet_backup.txt\e[0m"
 
 # Buat validator
 echo -e "\e[33mMembuat validator...\e[0m"
-# Gunakan passphrase yang disimpan dengan aman untuk pembuatan validator
-echo -e "$KEYRING_PASSPHRASE" | titand tx staking create-validator \
+run_with_loading "titand tx staking create-validator \
   --amount=${AMOUNT}uttnt \
   --pubkey=$(titand tendermint show-validator) \
   --chain-id=$CHAIN_ID \
@@ -149,6 +157,6 @@ echo -e "$KEYRING_PASSPHRASE" | titand tx staking create-validator \
   --commission-rate=0.05 \
   --min-self-delegation=1 \
   --fees 500uttnt \
-  --ip=$IP_ADDRESS
+  --ip=$IP_ADDRESS"
 
 echo -e "\e[36mSkrip selesai dijalankan. Node Titan Anda telah diatur dan berjalan.\e[0m"
