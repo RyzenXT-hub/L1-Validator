@@ -1,92 +1,106 @@
 #!/bin/bash
 
-# Check if script is run as root
+# Periksa apakah skrip dijalankan dengan hak akses root
 if [ "$(id -u)" != "0" ]; then
-    echo "This script needs to be run with root user privileges."
-    echo "Please try to switch to the root user using 'sudo -i' command and then run this script again."
+    echo "Skrip ini memerlukan hak akses root."
+    echo "Silakan coba jalankan ulang skrip dengan perintah 'sudo -i', lalu jalankan skrip ini kembali."
     exit 1
 fi
 
-# Function to install Node.js and npm if not installed
+# Periksa dan pasang Node.js dan npm
 function install_nodejs_and_npm() {
-    if ! command -v node &> /dev/null; then
-        echo "Node.js not installed. Installing..."
+    if command -v node > /dev/null 2>&1; then
+        echo "Node.js sudah terpasang."
+    else
+        echo "Node.js belum terpasang, sedang memasang..."
         curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
         sudo apt-get install -y nodejs
-    else
-        echo "Node.js already installed."
     fi
 
-    if ! command -v npm &> /dev/null; then
-        echo "npm not installed. Installing..."
+    if command -v npm > /dev/null 2>&1; then
+        echo "npm sudah terpasang."
+    else
+        echo "npm belum terpasang, sedang memasang..."
         sudo apt-get install -y npm
-    else
-        echo "npm already installed."
     fi
 }
 
-# Function to install or update PM2 globally
+# Periksa dan pasang PM2
 function install_pm2() {
-    if ! command -v pm2 &> /dev/null; then
-        echo "PM2 not installed. Installing..."
-        sudo npm install -g pm2@latest
+    if command -v pm2 > /dev/null 2>&1; then
+        echo "PM2 sudah terpasang."
     else
-        echo "PM2 already installed."
+        echo "PM2 belum terpasang, sedang memasang..."
+        npm install pm2@latest -g
     fi
 }
 
-# Function to set alias in shell configuration
+# Fungsi untuk mengecek dan mengatur alias
 function check_and_set_alias() {
     local alias_name="art"
     local shell_rc="$HOME/.bashrc"
 
+    # Gunakan .zshrc untuk pengguna Zsh
     if [ -n "$ZSH_VERSION" ]; then
         shell_rc="$HOME/.zshrc"
+    elif [ -n "$BASH_VERSION" ]; then
+        shell_rc="$HOME/.bashrc"
     fi
 
+    # Periksa apakah alias sudah diatur
     if ! grep -q "$alias_name" "$shell_rc"; then
-        echo "Setting shortcut alias '$alias_name' in $shell_rc"
+        echo "Mengatur alias '$alias_name' di $shell_rc"
         echo "alias $alias_name='bash $SCRIPT_PATH'" >> "$shell_rc"
-        echo "Please run 'source $shell_rc' to activate the shortcut, or reopen the terminal."
+        # Tambahkan pesan untuk mengaktifkan alias
+        echo "Alias '$alias_name' sudah diatur. Jalankan 'source $shell_rc' untuk mengaktifkan alias, atau buka ulang terminal."
     else
-        echo "Shortcut alias '$alias_name' already set in $shell_rc."
-        echo "If the shortcut doesn't work, try running 'source $shell_rc' or reopen the terminal."
+        # Jika alias sudah diatur, berikan pesan informasi
+        echo "Alias '$alias_name' sudah diatur di $shell_rc."
+        echo "Jika alias tidak berfungsi, coba jalankan 'source $shell_rc' atau buka ulang terminal."
     fi
 }
 
-# Function to install Titan node and configure
+# Fungsi instalasi node
 function install_node() {
     install_nodejs_and_npm
     install_pm2
 
-    # Update and install necessary packages
+    # Update dan instal paket-paket yang diperlukan
     sudo apt update && sudo apt upgrade -y
     sudo apt install -y curl iptables build-essential git wget jq make gcc nano tmux htop nvme-cli pkg-config libssl-dev libleveldb-dev tar clang bsdmainutils ncdu unzip libleveldb-dev lz4 snapd
 
-    # Install Go
+    # Instal Go
     sudo rm -rf /usr/local/go
-    curl -L https://go.dev/dl/go1.22.0.linux-amd64.tar.gz | sudo tar -C /usr/local -xz
+    curl -L https://go.dev/dl/go1.22.0.linux-amd64.tar.gz | sudo tar -xzf - -C /usr/local
     echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> $HOME/.bash_profile
     source $HOME/.bash_profile
     go version
 
-    # Build and install Titan
+    # Unduh semua file biner
     cd $HOME
     git clone https://github.com/nezha90/titan.git
     cd titan
     go build ./cmd/titand
-    sudo cp titand /usr/local/bin
+    cp titand /usr/local/bin
 
-    # Configure Titan node
-    export MONIKER="Ryzen-Node"
+    # Konfigurasi titand
+    export MONIKER="My_Node"
     titand init $MONIKER --chain-id titan-test-1
     titand config node tcp://localhost:53457
 
-    # Download initial files and address book
-    wget https://raw.githubusercontent.com/nezha90/titan/main/genesis/genesis.json -P ~/.titan/config/
-    wget https://raw.githubusercontent.com/nezha90/titan/main/addrbook/addrbook.json -P ~/.titan/config/
+    # Dapatkan file genesis dan addrbook awal
+    wget https://raw.githubusercontent.com/nezha90/titan/main/genesis/genesis.json
+    mv genesis.json ~/.titan/config/genesis.json
 
-    # Configure pruning and other settings
+    # Konfigurasi node
+    SEEDS="bb075c8cc4b7032d506008b68d4192298a09aeea@47.76.107.159:26656"
+    PEERS=""
+    sed -i 's|^persistent_peers *=.*|persistent_peers = "'$PEERS'"|' $HOME/.titan/config/config.toml
+
+    wget https://raw.githubusercontent.com/nezha90/titan/main/addrbook/addrbook.json
+    mv addrbook.json ~/.titan/config/addrbook.json
+
+    # Konfigurasi pruning
     sed -i -e "s/^pruning *=.*/pruning = \"custom\"/" $HOME/.titan/config/app.toml
     sed -i -e "s/^pruning-keep-recent *=.*/pruning-keep-recent = \"100\"/" $HOME/.titan/config/app.toml
     sed -i -e "s/^pruning-keep-every *=.*/pruning-keep-every = \"0\"/" $HOME/.titan/config/app.toml
@@ -94,159 +108,168 @@ function install_node() {
     sed -i -e 's/max_num_inbound_peers = 40/max_num_inbound_peers = 100/' -e 's/max_num_outbound_peers = 10/max_num_outbound_peers = 100/' $HOME/.titan/config/config.toml
     sed -i.bak -e "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.0025uttnt\"/;" ~/.titan/config/app.toml
 
-    # Configure ports
+    # Konfigurasi port
     node_address="tcp://localhost:53457"
     sed -i -e "s%^proxy_app = \"tcp://127.0.0.1:26658\"%proxy_app = \"tcp://127.0.0.1:53458\"%; s%^laddr = \"tcp://127.0.0.1:26657\"%laddr = \"tcp://127.0.0.1:53457\"%; s%^pprof_laddr = \"localhost:6060\"%pprof_laddr = \"localhost:53460\"%; s%^laddr = \"tcp://0.0.0.0:26656\"%laddr = \"tcp://0.0.0.0:53456\"%; s%^prometheus_listen_addr = \":26660\"%prometheus_listen_addr = \":53466\"%" $HOME/.titan/config/config.toml
     sed -i -e "s%^address = \"tcp://localhost:1317\"%address = \"tcp://0.0.0.0:53417\"%; s%^address = \":8080\"%address = \":53480\"%; s%^address = \"localhost:9090\"%address = \"0.0.0.0:53490\"%; s%^address = \"localhost:9091\"%address = \"0.0.0.0:53491\"%; s%:8545%:53445%; s%:8546%:53446%; s%:6065%:53465%" $HOME/.titan/config/app.toml
     echo "export TITAN_RPC_PORT=$node_address" >> $HOME/.bash_profile
-    source $HOME/.bash_profile
+    source $HOME/.bash_profile   
 
-    # Start Titan node with PM2
     pm2 start titand -- start && pm2 save && pm2 startup
 
-    # Download snapshot
+    # Unduh snapshot
     titand tendermint unsafe-reset-all --home $HOME/.titan --keep-addr-book
     curl https://snapshots.dadunode.com/titan/titan_latest_tar.lz4 | lz4 -dc - | tar -xf - -C $HOME/.titan/data
     mv $HOME/.titan/priv_validator_state.json.backup $HOME/.titan/data/priv_validator_state.json
 
-    # Restart Titan node
-    pm2 restart titand
+    # Gunakan PM2 untuk memulai proses node
 
-    echo '====================== After the installation is complete, please exit the script and execute source $HOME/.bash_profile to load the environment variables ==========================='
+    pm2 restart titand
+    
+
+    echo '====================== Instalasi selesai, silakan keluar dari skrip dan jalankan source $HOME/.bash_profile untuk memuat variabel lingkungan ==========================='
+    
 }
 
-# Function to check Titan service status
+# Periksa status layanan titan
 function check_service_status() {
     pm2 list
 }
 
-# Function to view Titan node logs
+# Lihat log node titan
 function view_logs() {
     pm2 logs titand
 }
 
-# Function to uninstall Titan node
+# Fungsi untuk menghapus node titan
 function uninstall_node() {
-    echo "Are you sure you want to uninstall the Titan node program? This will delete all related data. [Y/N]"
-    read -r -p "Please confirm: " response
+    echo "Apakah Anda yakin ingin menghapus program node titan? Ini akan menghapus semua data terkait. [Y/N]"
+    read -r -p "Konfirmasi: " response
 
     case "$response" in
-        [yY][eE][sS]|[yY])
-            echo "Start uninstalling the Titan node program..."
+        [yY][eE][sS]|[yY]) 
+            echo "Memulai proses penghapusan node..."
             pm2 stop titand && pm2 delete titand
-            rm -rf $HOME/.titan $HOME/titan $(which titand)
-            echo "Node program uninstallation completed"
+            rm -rf $HOME/.titand $HOME/titan $(which titand)
+            echo "Program node titan berhasil dihapus."
             ;;
         *)
-            echo "Cancel the uninstallation operation."
+            echo "Operasi penghapusan dibatalkan."
             ;;
     esac
 }
 
-# Function to add wallet
+# Fungsi untuk menambahkan wallet baru
 function add_wallet() {
     titand keys add wallet
 }
 
-# Function to import wallet
+# Fungsi untuk mengimpor wallet
 function import_wallet() {
     titand keys add wallet --recover
 }
 
-# Function to check wallet balance
+# Fungsi untuk memeriksa saldo wallet
 function check_balances() {
-    read -p "Please enter a wallet address: " wallet_address
+    read -p "Masukkan alamat wallet: " wallet_address
     titand query bank balances "$wallet_address"
 }
 
-# Function to check node sync status
+# Fungsi untuk memeriksa status sinkronisasi node
 function check_sync_status() {
     titand status | jq .SyncInfo
 }
 
-# Function to create validator
+# Fungsi untuk menambahkan validator
 function add_validator() {
-    read -p "Please enter a wallet name: " wallet_name
-    read -p "Please enter a validator name: " validator_name
+    read -p "Masukkan nama wallet Anda: " wallet_name
+    read -p "Masukkan nama validator yang ingin Anda atur: " validator_name
+    
+titand tx staking create-validator \
+--amount="1000000uttnt" \
+--pubkey=$(titand tendermint show-validator) \
+--moniker="$validator_name" \
+--commission-max-change-rate=0.01 \
+--commission-max-rate=1.0 \
+--commission-rate=0.07 \
+--min-self-delegation=1 \
+--fees 500uttnt \
+--from="$wallet_name" \
+--chain-id=titan-test-1
 
-    titand tx staking create-validator \
-    --amount="1000000uttnt" \
-    --pubkey=$(titand tendermint show-validator) \
-    --moniker="$validator_name" \
-    --commission-max-change-rate=0.01 \
-    --commission-max-rate=1.0 \
-    --commission-rate=0.07 \
-    --min-self-delegation=1 \
-    --fees 500uttnt \
-    --from="$wallet_name"
 }
 
-# Function to delegate tokens to self as validator
+
+# Fungsi untuk menyetorkan validator sendiri
 function delegate_self_validator() {
-    read -p "Please enter the amount of tokens to stake: " amount
-    read -p "Please enter a wallet name: " wallet_name
+read -p "Masukkan jumlah token yang ingin dititipkan: " math
+read -p "Masukkan nama wallet: " wallet_name
+titand tx staking delegate $(titand keys show $wallet_name --bech val -a)  ${math}art --from $wallet_name --fees 500uttnt
 
-    validator_address=$(titand keys show $wallet_name --bech val -a)
-    titand tx staking delegate $validator_address ${amount}art --from $wallet_name --fees 500uttnt
 }
 
-# Function to export validator private key
+# Fungsi untuk mengekspor kunci privasi validator
 function export_priv_validator_key() {
-    echo "==================== Please back up all the following contents in your own notepad or excel sheet =========================="
+    echo "====================Silakan backup semua konten di bawah ini ke catatan atau spreadsheet Anda======================="
     cat ~/.titan/config/priv_validator_key.json
+    
 }
 
-# Function to update the script
+
 function update_script() {
     SCRIPT_URL="https://raw.githubusercontent.com/a3165458/titan/main/titan.sh"
     curl -o $SCRIPT_PATH $SCRIPT_URL
     chmod +x $SCRIPT_PATH
-    echo "The script has been updated. Please exit the script and execute bash $SCRIPT_PATH to rerun the script."
+    echo "Skrip telah diperbarui. Keluar dari skrip ini, jalankan bash titan.sh untuk menjalankan skrip kembali."
 }
 
-# Main menu function
+# Menu utama
 function main_menu() {
     while true; do
         clear
-        echo "============================ Titan Node Installation ===================================="
-        echo "To exit the script, press Ctrl+C"
-        echo "Please choose the operation you want to execute:"
-        echo "1. Install node"
-        echo "2. Create wallet"
-        echo "3. Import wallet"
-        echo "4. Check wallet address balance"
-        echo "5. Check node sync status"
-        echo "6. Check current service status"
-        echo "7. View logs"
-        echo "8. Uninstall node"
-        echo "9. Set alias"
-        echo "10. Create validator"
-        echo "11. Delegate to self"
-        echo "12. Backup validator private key"
-        echo "13. Update this script"
-        read -p "Please enter the option (1-13): " option
+        echo "Skrip dan tutorial disusun oleh pengguna Twitter @y95277777, gratis dan open source. Jangan percaya pada yang memungut biaya."
+        echo "============================Instalasi Node Titan============================"
+        echo "Komunitas Node Telegram: https://t.me/niuwuriji"
+        echo "Saluran Node Telegram: https://t.me/niuwuriji"
+        echo "Komunitas Discord Node: https://discord.gg/GbMV5EcNWF"
+        echo "Untuk keluar dari skrip, cukup tekan Ctrl+C di keyboard."
+        echo "Pilih operasi yang ingin Anda lakukan:"
+        echo "1. Instal node"
+        echo "2. Buat wallet"
+        echo "3. Impor wallet"
+        echo "4. Periksa saldo wallet"
+        echo "5. Periksa status sinkronisasi node"
+        echo "6. Periksa status layanan saat ini"
+        echo "7. Lihat log berjalan"
+        echo "8. Hapus node"
+        echo "9. Atur alias"
+        echo "10. Buat validator"
+        echo "11. Titipkan sendiri validator"
+        echo "12. Ekspor kunci privasi validator"
+        echo "13. Perbarui skrip ini"
+        read -p "Masukkan pilihan (1-13): " OPTION
 
-        case $option in
-            1) install_node ;;
-            2) add_wallet ;;
-            3) import_wallet ;;
-            4) check_balances ;;
-            5) check_sync_status ;;
-            6) check_service_status ;;
-            7) view_logs ;;
-            8) uninstall_node ;;
-            9) check_and_set_alias ;;
-            10) add_validator ;;
-            11) delegate_self_validator ;;
-            12) export_priv_validator_key ;;
-            13) update_script ;;
-            *) echo "Invalid option." ;;
+        case $OPTION in
+        1) install_node ;;
+        2) add_wallet ;;
+        3) import_wallet ;;
+        4) check_balances ;;
+        5) check_sync_status ;;
+        6) check_service_status ;;
+        7) view_logs ;;
+        8) uninstall_node ;;
+        9) check_and_set_alias ;;
+        10) add_validator ;;
+        11) delegate_self_validator ;;
+        12) export_priv_validator_key ;;
+        13) update_script ;;
+        *) echo "Pilihan tidak valid." ;;
         esac
-
-        echo "Press any key to return to the main menu..."
+        echo "Tekan tombol apa saja untuk kembali ke menu utama..."
         read -n 1
     done
+    
 }
 
-# Execute main menu
+# Tampilkan menu utama
 main_menu
