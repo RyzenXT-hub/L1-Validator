@@ -5,7 +5,7 @@ Cara Penggunaan
 Untuk mengunduh dan menginstal skrip secara otomatis, jalankan perintah berikut di mesin VM Anda:
 
 ```
-sudo apt-get update && sudo apt-get install -y wget && wget https://raw.githubusercontent.com/RyzenXT-hub/L1-Validator/main/validator.sh && chmod +x validator.sh && ./validator.sh
+sudo apt-get update && sudo apt-get install -y wget && wget https://raw.githubusercontent.com/RyzenXT-hub/L1-Validator/main/validator.sh && sudo chmod +x validator.sh && sudo ./validator.sh
 ```
 Jika Gagal / Error Silahkan copy dan jalankan perintah berikut : 
 ```
