@@ -5,13 +5,13 @@ Cara Penggunaan
 Untuk mengunduh dan menginstal skrip secara otomatis, jalankan perintah berikut di mesin VM Anda:
 
 ```
-sudo apt-get update && sudo apt-get install -y wget && wget https://raw.githubusercontent.com/RyzenXT-hub/L1-Validator/main/setup_titan_validator.sh && chmod +x setup_titan_validator.sh && ./setup_titan_validator.sh
+sudo apt-get update && sudo apt-get install -y wget && wget https://raw.githubusercontent.com/RyzenXT-hub/L1-Validator/main/validator.sh && chmod +x validator.sh && ./validator.sh
 ```
 Jika Gagal / Error Silahkan copy dan jalankan perintah berikut : 
 ```
 systemctl stop titan.service || true
 systemctl disable titan.service || true
-rm -rf ~/.titan/ ~/titan/ /etc/systemd/system/titan.service ~/setup_titan_validator.sh /root/backups/ /root/go/ /usr/local/go/ go1.21.0.linux-amd64.tar.gz && rm -rf $HOME/.titan $HOME/titan /usr/local/bin/titand
+rm -rf ~/.titan/ ~/titan/ /etc/systemd/system/titan.service ~/validator.sh /root/backups/ /root/go/ /usr/local/go/ go1.21.0.linux-amd64.tar.gz && rm -rf $HOME/.titan $HOME/titan /usr/local/bin/titand
 
 ```
 Perintah ini akan:
