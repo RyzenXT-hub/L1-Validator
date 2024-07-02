@@ -81,8 +81,8 @@ function install_node() {
     go build ./cmd/titand
     cp titand /usr/local/bin
 
-    # Menjalankan konfigurasi titand
-    read -p "Silakan masukkan nama moniker: " MONIKER
+    # Mengkonfigurasi titand
+    export MONIKER="Ryzen-Validator"
     titand init $MONIKER --chain-id titan-test-1
     titand config node tcp://localhost:53457
 
